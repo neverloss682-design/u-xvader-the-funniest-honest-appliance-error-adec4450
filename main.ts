@@ -15,7 +15,7 @@
 // The punchline is a REVERSAL, not an escalation: nothing in the first
 // clause lets the reader guess "The wall is clean."
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ENTRY =
@@ -40,8 +40,14 @@ function main(): void {
   gate(ENTRY);
   const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(join(outDir, "entry.txt"), ENTRY + "\n", "utf8");
-  console.log(`wrote ${ENTRY.length} chars to ${join(outDir, "entry.txt")}`);
+  const outPath = join(outDir, "entry.txt");
+  writeFileSync(outPath, ENTRY + "\n", "utf8");
+  // Round-trip check: what landed on disk must be exactly the gated entry.
+  const roundTrip = readFileSync(outPath, "utf8");
+  if (roundTrip !== ENTRY + "\n") {
+    throw new Error("round-trip mismatch: entry.txt does not match ENTRY");
+  }
+  console.log(`wrote ${ENTRY.length} chars to ${outPath}`);
 }
 
 main();
